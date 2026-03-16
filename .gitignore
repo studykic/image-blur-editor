@@ -1,0 +1,6 @@
+node_modules
+dist
+.DS_Store
+.vite-dev.err.log
+.vite-dev.out.log
+scaffold-temp
