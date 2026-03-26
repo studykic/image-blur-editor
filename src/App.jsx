@@ -44,7 +44,7 @@ function getInitialTheme() {
 
 function App() {
   const canvasRef = useRef(null)
-  const stageRef = useRef(null)
+  const mainContentRef = useRef(null)
   const fileInputRef = useRef(null)
   const draftActionRef = useRef(null)
   const pointerStateRef = useRef({
@@ -121,11 +121,11 @@ function App() {
   ]
 
   useLayoutEffect(() => {
-    if (!stageRef.current) {
+    if (!mainContentRef.current) {
       return undefined
     }
 
-    const element = stageRef.current
+    const element = mainContentRef.current
     const observer = new ResizeObserver((entries) => {
       const entry = entries[0]
       if (!entry) {
@@ -709,370 +709,629 @@ function App() {
   const statusText = getStatusText(statusMessage)
 
   return (
-    <div className="app-shell">
-      <input
-        ref={fileInputRef}
-        className="hidden-input"
-        type="file"
-        accept="image/png,image/jpeg,image/webp"
-        onChange={handleFileChange}
-      />
 
-      <header className="topbar">
-        <div className="brand-block">
-          <p className="eyebrow">{t('meta.kicker')}</p>
-          <h1>{t('meta.title')}</h1>
-          <p className="brand-copy">{t('meta.subtitle')}</p>
-        </div>
+      <div className={`app-layout ${hasImage ? 'has-properties' : ''}`}>
 
-        <div className="file-block">
-          <p className="eyebrow">{t('file.label')}</p>
-          <strong>{imageAsset ? imageAsset.name : t('file.none')}</strong>
-          <p>{imageAsset ? `${imageAsset.width} x ${imageAsset.height}` : t('file.hint')}</p>
-        </div>
+        <input
 
-        <div className="header-utility">
-          <div className="utility-row">
-            <div className="switch-card">
-              <p className="eyebrow">{t('language.label')}</p>
-              <div className="toggle-row" role="group" aria-label={t('language.label')}>
-                {LANGUAGE_OPTIONS.map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    className={language === option.value ? 'toggle-button active' : 'toggle-button'}
-                    onClick={() => setLanguage(option.value)}
-                    aria-pressed={language === option.value}
-                  >
-                    {t(option.labelKey)}
-                  </button>
-                ))}
-              </div>
+          ref={fileInputRef}
+
+          className="hidden-input"
+
+          type="file"
+
+          accept="image/png,image/jpeg,image/webp"
+
+          onChange={handleFileChange}
+
+        />
+
+  
+
+        <header className="app-header">
+
+          <div className="header-brand">{t('meta.title')}</div>
+
+          {hasImage && (
+
+            <div className="header-file-info">
+
+              <strong>{imageAsset.name}</strong>
+
+              <span>
+
+                ({imageAsset.width}x{imageAsset.height})
+
+              </span>
+
             </div>
 
-            <div className="switch-card">
-              <p className="eyebrow">{t('theme.label')}</p>
-              <div className="toggle-row" role="group" aria-label={t('theme.label')}>
-                {THEME_OPTIONS.map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    className={theme === option.value ? 'toggle-button active' : 'toggle-button'}
-                    onClick={() => setTheme(option.value)}
-                    aria-pressed={theme === option.value}
-                  >
-                    {t(option.labelKey)}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
+          )}
 
           <div className="header-actions">
+
+            <div className="button-group">
+
+              {LANGUAGE_OPTIONS.map((option) => (
+
+                <button
+
+                  key={option.value}
+
+                  type="button"
+
+                  className="button"
+
+                  onClick={() => setLanguage(option.value)}
+
+                  aria-pressed={language === option.value}
+
+                >
+
+                  {t(option.labelKey)}
+
+                </button>
+
+              ))}
+
+            </div>
+
             <button
-              className="action-button primary"
+
+              className="button"
+
               type="button"
+
               onClick={() => fileInputRef.current?.click()}
+
               disabled={isLoading}
+
+              data-priority="primary"
+
             >
+
               {isLoading ? t('actions.loading') : t('actions.upload')}
+
             </button>
-            <button
-              className="action-button secondary"
-              type="button"
-              onClick={handleDownload}
-              disabled={!hasImage || isExporting}
-            >
-              {isExporting ? t('actions.exporting') : t('actions.download')}
-            </button>
-            <button
-              className="action-button quiet"
-              type="button"
-              onClick={handleReset}
-              disabled={!hasImage}
-            >
-              {t('actions.reset')}
-            </button>
+
+            {hasImage && (
+
+              <button
+
+                className="button"
+
+                type="button"
+
+                onClick={handleDownload}
+
+                disabled={!hasImage || isExporting}
+
+              >
+
+                {isExporting ? t('actions.exporting') : t('actions.download')}
+
+              </button>
+
+            )}
+
           </div>
-        </div>
-      </header>
 
-      <div className="app-body">
-        <aside className="control-sidebar">
-          <section className="panel-card">
-            <div className="panel-heading">
-              <div>
-                <p className="section-label">{t('panels.tools')}</p>
-                <h2>{t('panels.toolsTitle')}</h2>
+        </header>
+
+  
+
+        {hasImage && (
+
+          <aside className="app-toolbar">
+
+            <div className="panel">
+
+              <div className="panel__header">
+
+                <h2 className="panel__title">{t('panels.toolsTitle')}</h2>
+
               </div>
-              <span className="meta-chip">{selectedTool?.label}</span>
-            </div>
 
-            <div className="button-grid two-up">
-              {toolOptions.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  className={tool === option.value ? 'control-button active' : 'control-button'}
-                  onClick={() => setTool(option.value)}
-                  disabled={!hasImage}
-                  aria-pressed={tool === option.value}
-                >
-                  <span className="control-title">{option.label}</span>
-                  <span className="control-meta">{option.hotkey}</span>
-                  <span className="control-copy">{option.summary}</span>
-                </button>
-              ))}
-            </div>
+              <div className="panel__body">
 
-            <div className="history-row">
-              <button
-                type="button"
-                className="action-button secondary history-button"
-                onClick={handleUndo}
-                disabled={!canUndo}
-              >
-                {t('actions.undo')}
-              </button>
-              <button
-                type="button"
-                className="action-button secondary history-button"
-                onClick={handleRedo}
-                disabled={!canRedo}
-              >
-                {t('actions.redo')}
-              </button>
-            </div>
-          </section>
+                <div className="button-group">
 
-          <section className="panel-card">
-            <div className="panel-heading">
-              <div>
-                <p className="section-label">{t('panels.effect')}</p>
-                <h2>{t('panels.effectTitle')}</h2>
-              </div>
-              <span className="meta-chip">{currentEffectLabel}</span>
-            </div>
+                  {toolOptions.map((option) => (
 
-            <div className="button-grid single-column">
-              {effectOptions.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  className={effect === option.value ? 'control-button active' : 'control-button'}
-                  onClick={() => handleEffectSelect(option.value)}
-                  disabled={!hasImage}
-                  aria-pressed={effect === option.value}
-                >
-                  <span className="control-title">{option.label}</span>
-                  <span className="control-copy">{option.summary}</span>
-                  <span className="control-note">{option.caution}</span>
-                </button>
-              ))}
-            </div>
-
-            {effect === 'blur' && (
-              <>
-                <label className="field-heading">
-                  <span>{t('fields.blurStyle')}</span>
-                  <span>{selectedBlurStyle?.label}</span>
-                </label>
-                <div className="segmented-row">
-                  {blurStyleOptions.map((option) => (
                     <button
+
                       key={option.value}
+
                       type="button"
-                      className={blurStyle === option.value ? 'segment-button active' : 'segment-button'}
-                      onClick={() => setBlurStyle(option.value)}
-                      disabled={!hasImage || (option.value === 'smooth' && !blurSupported)}
-                      aria-pressed={blurStyle === option.value}
-                      title={!blurSupported && option.value === 'smooth' ? t('guidance.supportBlur') : option.summary}
+
+                      className="button"
+
+                      onClick={() => setTool(option.value)}
+
+                      disabled={!hasImage}
+
+                      aria-pressed={tool === option.value}
+
+                      title={`${option.label} (${option.hotkey})`}
+
                     >
+
                       {option.label}
+
                     </button>
+
                   ))}
-                </div>
-              </>
-            )}
 
-            {!blurSupported && effect === 'blur' && (
-              <p className="support-note">{t('guidance.supportBlur')}</p>
-            )}
-
-            <p className="panel-note">{effectGuidance}</p>
-          </section>
-
-          <section className="panel-card">
-            <div className="panel-heading">
-              <div>
-                <p className="section-label">{t('panels.adjustments')}</p>
-                <h2>{t('panels.adjustmentsTitle')}</h2>
-              </div>
-              <span className="meta-chip">{getCurrentStrengthLabel()}</span>
-            </div>
-
-            <label className="field-heading" htmlFor="brush-size">
-              <span>{t('fields.brushSize')}</span>
-              <span>{brushSize}px</span>
-            </label>
-            <input
-              id="brush-size"
-              type="range"
-              min="4"
-              max="180"
-              step="2"
-              value={brushSize}
-              onChange={(event) => setBrushSize(Number(event.target.value))}
-              disabled={!hasImage}
-            />
-
-            {effect === 'blur' && blurStyle === 'smooth' && (
-              <>
-                <label className="field-heading" htmlFor="smooth-strength">
-                  <span>{t('fields.blurAmount')}</span>
-                  <span>{smoothStrength}px</span>
-                </label>
-                <input
-                  id="smooth-strength"
-                  type="range"
-                  min="4"
-                  max="32"
-                  step="2"
-                  value={smoothStrength}
-                  onChange={(event) => setSmoothStrength(Number(event.target.value))}
-                  disabled={!hasImage || !blurSupported}
-                />
-              </>
-            )}
-
-            {effect === 'pixelate' && (
-              <>
-                <label className="field-heading" htmlFor="pixelate-strength">
-                  <span>{t('fields.blockSize')}</span>
-                  <span>{pixelateStrength}px</span>
-                </label>
-                <input
-                  id="pixelate-strength"
-                  type="range"
-                  min="4"
-                  max="36"
-                  step="2"
-                  value={pixelateStrength}
-                  onChange={(event) => setPixelateStrength(Number(event.target.value))}
-                  disabled={!hasImage}
-                />
-              </>
-            )}
-
-            {effect === 'blur' && blurStyle === 'solid' && (
-              <>
-                <label className="field-heading" htmlFor="redact-opacity">
-                  <span>{t('fields.fillOpacity')}</span>
-                  <span>{redactOpacity}%</span>
-                </label>
-                <input
-                  id="redact-opacity"
-                  type="range"
-                  min="40"
-                  max="100"
-                  step="5"
-                  value={redactOpacity}
-                  onChange={(event) => setRedactOpacity(Number(event.target.value))}
-                  disabled={!hasImage}
-                />
-
-                <label className="field-heading" htmlFor="redact-color">
-                  <span>{t('fields.fillColor')}</span>
-                  <span>{redactColor.toUpperCase()}</span>
-                </label>
-                <input
-                  id="redact-color"
-                  type="color"
-                  value={redactColor}
-                  onChange={(event) => setRedactColor(event.target.value)}
-                  disabled={!hasImage}
-                />
-              </>
-            )}
-          </section>
-
-          <section className="panel-card panel-card-muted">
-            <div className="panel-heading">
-              <div>
-                <p className="section-label">{t('panels.guidance')}</p>
-                <h2>{t('panels.guidanceTitle')}</h2>
-              </div>
-              <span className="meta-chip">{actionsLabel}</span>
-            </div>
-
-            <ul className="guidance-list">
-              <li>{t('guidance.item1')}</li>
-              <li>{t('guidance.item2')}</li>
-              <li>{t('guidance.item3')}</li>
-            </ul>
-
-            <p className="shortcut-strip">{t('misc.shortcut')}</p>
-          </section>
-        </aside>
-
-        <main className="workspace-column">
-          <section className="status-card" role="status" aria-live="polite">
-            <div className="status-copy">
-              <p className="section-label">{t('panels.status')}</p>
-              <strong>{statusText}</strong>
-              <p>{t('workspace.statusLine', { tool: selectedTool?.label, effect: currentEffectLabel })}</p>
-            </div>
-
-            <div className="status-badges">
-              <span className="status-badge">{selectedTool?.label}</span>
-              <span className="status-badge">{currentEffectLabel}</span>
-              <span className="status-badge">{getCurrentStrengthLabel()}</span>
-              <span className="status-badge">{actionsLabel}</span>
-            </div>
-          </section>
-
-          <section ref={stageRef} className="canvas-card">
-            {!hasImage ? (
-              <div className="empty-stage">
-                <div className="empty-copy">
-                  <p className="eyebrow">{t('workspace.emptyKicker')}</p>
-                  <h2>{t('workspace.emptyTitle')}</h2>
-                  <p>{t('workspace.emptyCopy')}</p>
                 </div>
 
-                <div className="empty-actions">
+                <div className="u-flex-center u-gap-2">
+
                   <button
-                    className="action-button primary"
+
                     type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isLoading}
+
+                    className="button"
+
+                    onClick={handleUndo}
+
+                    disabled={!canUndo}
+
                   >
-                    {isLoading ? t('actions.loading') : t('actions.choose')}
+
+                    {t('actions.undo')}
+
                   </button>
-                  <span className="empty-note">{t('workspace.emptyNote')}</span>
+
+                  <button
+
+                    type="button"
+
+                    className="button"
+
+                    onClick={handleRedo}
+
+                    disabled={!canRedo}
+
+                  >
+
+                    {t('actions.redo')}
+
+                  </button>
+
                 </div>
+
               </div>
+
+            </div>
+
+  
+
+            <div className="panel">
+
+              <div className="panel__header">
+
+                <h2 className="panel__title">{t('panels.effectTitle')}</h2>
+
+              </div>
+
+              <div className="panel__body">
+
+                <div className="button-group">
+
+                {effectOptions.map((option) => (
+
+                  <button
+
+                    key={option.value}
+
+                    type="button"
+
+                    className="button"
+
+                    onClick={() => handleEffectSelect(option.value)}
+
+                    disabled={!hasImage}
+
+                    aria-pressed={effect === option.value}
+
+                  >
+
+                    {option.label}
+
+                  </button>
+
+                ))}
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </aside>
+
+        )}
+
+  
+
+              <main className="app-canvas" ref={mainContentRef}>
+
+  
+
+                <div className="canvas-wrapper">
+
+  
+
+                  {!hasImage ? (
+
+  
+
+                    <div className="empty-stage">
+
+  
+
+                      <h2>{t('workspace.emptyTitle')}</h2>
+
+                <p>{t('workspace.emptyCopy')}</p>
+
+                <button
+
+                  className="button"
+
+                  data-priority="primary"
+
+                  type="button"
+
+                  onClick={() => fileInputRef.current?.click()}
+
+                  disabled={isLoading}
+
+                >
+
+                  {isLoading ? t('actions.loading') : t('actions.choose')}
+
+                </button>
+
+              </div>
+
             ) : (
-              <div className="canvas-surface">
-                <canvas
-                  ref={canvasRef}
-                  className="editor-canvas"
-                  width={viewSize.width}
-                  height={viewSize.height}
-                  onContextMenu={(event) => event.preventDefault()}
-                  onPointerDown={handlePointerDown}
-                  onPointerMove={handlePointerMove}
-                  onPointerUp={handlePointerUp}
-                  onPointerCancel={handlePointerCancel}
-                  onPointerLeave={handlePointerLeave}
-                />
-              </div>
+
+              <canvas
+
+                ref={canvasRef}
+
+                className="editor-canvas"
+
+                width={viewSize.width}
+
+                height={viewSize.height}
+
+                onContextMenu={(event) => event.preventDefault()}
+
+                onPointerDown={handlePointerDown}
+
+                onPointerMove={handlePointerMove}
+
+                onPointerUp={handlePointerUp}
+
+                onPointerCancel={handlePointerCancel}
+
+                onPointerLeave={handlePointerLeave}
+
+              />
+
             )}
-          </section>
+
+          </div>
+
         </main>
+
+  
+
+        {hasImage && (
+
+          <aside className="app-properties">
+
+             <div className="panel">
+
+                <div className="panel__header">
+
+                  <h2 className="panel__title">{t('panels.adjustmentsTitle')}</h2>
+
+                </div>
+
+                <div className="panel__body">
+
+                  {effect === 'blur' && (
+
+                    <div className='form-field'>
+
+                       <label className="form-field__label">
+
+                        <span>{t('fields.blurStyle')}</span>
+
+                      </label>
+
+                      <div className="button-group">
+
+                        {blurStyleOptions.map((option) => (
+
+                          <button
+
+                            key={option.value}
+
+                            type="button"
+
+                            className='button'
+
+                            onClick={() => setBlurStyle(option.value)}
+
+                            disabled={!hasImage || (option.value === 'smooth' && !blurSupported)}
+
+                            aria-pressed={blurStyle === option.value}
+
+                            title={!blurSupported && option.value === 'smooth' ? t('guidance.supportBlur') : option.summary}
+
+                          >
+
+                            {option.label}
+
+                          </button>
+
+                        ))}
+
+                      </div>
+
+                    </div>
+
+                  )}
+
+  
+
+                  <div className="form-field">
+
+                    <label className="form-field__label" htmlFor="brush-size">
+
+                      <span>{t('fields.brushSize')}</span>
+
+                      <span>{brushSize}px</span>
+
+                    </label>
+
+                    <input
+
+                      id="brush-size"
+
+                      type="range"
+
+                      min="4"
+
+                      max="180"
+
+                      step="2"
+
+                      value={brushSize}
+
+                      onChange={(event) => setBrushSize(Number(event.target.value))}
+
+                      disabled={!hasImage}
+
+                    />
+
+                  </div>
+
+  
+
+                  {effect === 'blur' && blurStyle === 'smooth' && (
+
+                    <div className="form-field">
+
+                      <label className="form-field__label" htmlFor="smooth-strength">
+
+                        <span>{t('fields.blurAmount')}</span>
+
+                        <span>{smoothStrength}px</span>
+
+                      </label>
+
+                      <input
+
+                        id="smooth-strength"
+
+                        type="range"
+
+                        min="4"
+
+                        max="32"
+
+                        step="2"
+
+                        value={smoothStrength}
+
+                        onChange={(event) => setSmoothStrength(Number(event.target.value))}
+
+                        disabled={!hasImage || !blurSupported}
+
+                      />
+
+                    </div>
+
+                  )}
+
+  
+
+                  {effect === 'pixelate' && (
+
+                    <div className="form-field">
+
+                      <label className="form-field__label" htmlFor="pixelate-strength">
+
+                        <span>{t('fields.blockSize')}</span>
+
+                        <span>{pixelateStrength}px</span>
+
+                      </label>
+
+                      <input
+
+                        id="pixelate-strength"
+
+                        type="range"
+
+                        min="4"
+
+                        max="36"
+
+                        step="2"
+
+                        value={pixelateStrength}
+
+                        onChange={(event) => setPixelateStrength(Number(event.target.value))}
+
+                        disabled={!hasImage}
+
+                      />
+
+                    </div>
+
+                  )}
+
+  
+
+                  {effect === 'blur' && blurStyle === 'solid' && (
+
+                    <>
+
+                      <div className="form-field">
+
+                        <label className="form-field__label" htmlFor="redact-opacity">
+
+                          <span>{t('fields.fillOpacity')}</span>
+
+                          <span>{redactOpacity}%</span>
+
+                        </label>
+
+                        <input
+
+                          id="redact-opacity"
+
+                          type="range"
+
+                          min="40"
+
+                          max="100"
+
+                          step="5"
+
+                          value={redactOpacity}
+
+                          onChange={(event) => setRedactOpacity(Number(event.target.value))}
+
+                          disabled={!hasImage}
+
+                        />
+
+                      </div>
+
+  
+
+                      <div className="form-field">
+
+                        <label className="form-field__label" htmlFor="redact-color">
+
+                          <span>{t('fields.fillColor')}</span>
+
+                          <span>{redactColor.toUpperCase()}</span>
+
+                        </label>
+
+                        <input
+
+                          id="redact-color"
+
+                          type="color"
+
+                          value={redactColor}
+
+                          onChange={(event) => setRedactColor(event.target.value)}
+
+                          disabled={!hasImage}
+
+                        />
+
+                      </div>
+
+                    </>
+
+                  )}
+
+                   {!blurSupported && effect === 'blur' && (
+
+                    <p className="info-badge">{t('guidance.supportBlur')}</p>
+
+                  )}
+
+                </div>
+
+             </div>
+
+             <div className="panel">
+
+                <div className="panel__header">
+
+                  <h2 className="panel__title">{t('panels.guidanceTitle')}</h2>
+
+                </div>
+
+                <div className="panel__body">
+
+                    <p>{effectGuidance}</p>
+
+                </div>
+
+              </div>
+
+               <div className="panel">
+
+                  <div className="panel__header">
+
+                      <h2 className="panel__title">{t('misc.edits', { count: actions.length })}</h2>
+
+                  </div>
+
+                  <div className='panel__body'>
+
+                      <button
+
+                        className="button"
+
+                        type="button"
+
+                        onClick={handleReset}
+
+                        disabled={!hasImage}
+
+                        data-priority="quiet"
+
+                      >
+
+                        {t('actions.reset')}
+
+                      </button>
+
+                  </div>
+
+               </div>
+
+          </aside>
+
+        )}
+
       </div>
-    </div>
-  )
-}
+
+    )
+
+  }
 
 export default App
